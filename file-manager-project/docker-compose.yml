@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: file-manager-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: filemanager
+      POSTGRES_PASSWORD: filemanager
+      POSTGRES_DB: filemanager
+    ports:
+      - "5432:5432"
+    volumes:
+      - file-manager-postgres:/var/lib/postgresql/data
+
+volumes:
+  file-manager-postgres:
