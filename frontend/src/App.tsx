@@ -107,8 +107,18 @@ function App() {
         </div>
 
         <nav>
-          <button className="nav-item active"><LayoutGrid size={18} /> My files</button>
-          <button className="nav-item" onClick={() => setFilter("image")}><ImageIcon size={18} /> Images</button>
+          <button
+            className={filter === "all" ? "nav-item active" : "nav-item"}
+            onClick={() => setFilter("all")}
+          >
+            <LayoutGrid size={18} /> My files
+          </button>
+          <button
+            className={filter === "image" ? "nav-item active" : "nav-item"}
+            onClick={() => setFilter("image")}
+          >
+            <ImageIcon size={18} /> Images
+          </button>
         </nav>
 
         <div className="sidebar-card">
