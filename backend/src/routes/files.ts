@@ -54,7 +54,7 @@ router.get("/", async (req: AuthedRequest, res, next) => {
 
 router.get("/:id", async (req: AuthedRequest, res, next) => {
   try {
-    const file = await prisma.file.findFirst({ where: { id: req.params.id, userId: req.userId } });
+    const file = await prisma.file.findFirst({ where: { id: String(req.params.id), userId: req.userId } });
     if (!file) return res.status(404).json({ message: "File not found." });
     res.json(file);
   } catch (error) {
@@ -90,7 +90,7 @@ router.post("/upload", upload.single("file"), async (req: AuthedRequest, res, ne
 
 router.get("/:id/download", async (req: AuthedRequest, res, next) => {
   try {
-    const file = await prisma.file.findFirst({ where: { id: req.params.id, userId: req.userId } });
+    const file = await prisma.file.findFirst({ where: { id: String(req.params.id), userId: req.userId } });
     if (!file || !fs.existsSync(file.path)) {
       return res.status(404).json({ message: "File not found." });
     }
@@ -103,7 +103,7 @@ router.get("/:id/download", async (req: AuthedRequest, res, next) => {
 
 router.delete("/:id", async (req: AuthedRequest, res, next) => {
   try {
-    const file = await prisma.file.findFirst({ where: { id: req.params.id, userId: req.userId } });
+    const file = await prisma.file.findFirst({ where: { id: String(req.params.id), userId: req.userId } });
     if (!file) return res.status(404).json({ message: "File not found." });
 
     if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
