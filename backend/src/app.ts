@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
+import authRouter from "./routes/auth";
 import filesRouter from "./routes/files";
 import statsRouter from "./routes/stats";
 import { config } from "./config";
@@ -16,6 +17,7 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", service: "file-manager-api" });
 });
 
+app.use("/api/auth", authRouter);
 app.use("/api/files", filesRouter);
 app.use("/api/stats", statsRouter);
 

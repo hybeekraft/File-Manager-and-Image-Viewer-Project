@@ -13,3 +13,9 @@ export type Stats = {
   imageFiles: number;
   totalBytes: number;
 };
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+};

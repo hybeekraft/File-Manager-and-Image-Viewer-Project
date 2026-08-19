@@ -5,6 +5,7 @@ import fs from "fs";
 import crypto from "crypto";
 import { prisma } from "../prisma";
 import { config } from "../config";
+import { requireAuth, AuthedRequest } from "../middleware/auth";
 
 const router = Router();
 const uploadDir = path.resolve(process.cwd(), "uploads");
@@ -25,7 +26,9 @@ const upload = multer({
 
 const allowedPrefixes = ["image/", "application/pdf", "text/", "application/zip"];
 
-router.get("/", async (req, res, next) => {
+router.use(requireAuth);
+
+router.get("/", async (req: AuthedRequest, res, next) => {
   try {
     const search = String(req.query.search || "").trim();
     const type = String(req.query.type || "all");
@@ -33,6 +36,7 @@ router.get("/", async (req, res, next) => {
     const files = await prisma.file.findMany({
       where: {
         AND: [
+          { userId: req.userId },
           search
             ? { originalName: { contains: search, mode: "insensitive" } }
             : {},
@@ -48,9 +52,9 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", async (req: AuthedRequest, res, next) => {
   try {
-    const file = await prisma.file.findUnique({ where: { id: req.params.id } });
+    const file = await prisma.file.findFirst({ where: { id: req.params.id, userId: req.userId } });
     if (!file) return res.status(404).json({ message: "File not found." });
     res.json(file);
   } catch (error) {
@@ -58,7 +62,7 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-router.post("/upload", upload.single("file"), async (req, res, next) => {
+router.post("/upload", upload.single("file"), async (req: AuthedRequest, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded." });
 
@@ -74,6 +78,7 @@ router.post("/upload", upload.single("file"), async (req, res, next) => {
         mimeType: req.file.mimetype,
         size: req.file.size,
         path: req.file.path,
+        userId: req.userId!,
       },
     });
 
@@ -83,9 +88,9 @@ router.post("/upload", upload.single("file"), async (req, res, next) => {
   }
 });
 
-router.get("/:id/download", async (req, res, next) => {
+router.get("/:id/download", async (req: AuthedRequest, res, next) => {
   try {
-    const file = await prisma.file.findUnique({ where: { id: req.params.id } });
+    const file = await prisma.file.findFirst({ where: { id: req.params.id, userId: req.userId } });
     if (!file || !fs.existsSync(file.path)) {
       return res.status(404).json({ message: "File not found." });
     }
@@ -96,9 +101,9 @@ router.get("/:id/download", async (req, res, next) => {
   }
 });
 
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", async (req: AuthedRequest, res, next) => {
   try {
-    const file = await prisma.file.findUnique({ where: { id: req.params.id } });
+    const file = await prisma.file.findFirst({ where: { id: req.params.id, userId: req.userId } });
     if (!file) return res.status(404).json({ message: "File not found." });
 
     if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
