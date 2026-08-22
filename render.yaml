@@ -13,6 +13,10 @@ services:
           property: connectionString
       - key: PORT
         value: 5000
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
       - key: CORS_ORIGIN
         sync: false
       - key: MAX_FILE_SIZE_MB

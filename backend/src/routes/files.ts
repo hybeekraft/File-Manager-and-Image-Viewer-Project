@@ -19,12 +19,19 @@ const storage = multer.diskStorage({
   },
 });
 
+const allowedPrefixes = ["image/", "application/pdf", "text/", "application/zip"];
+
 const upload = multer({
   storage,
   limits: { fileSize: config.maxFileSize },
+  fileFilter: (_req, file, cb) => {
+    if (allowedPrefixes.some((prefix) => file.mimetype.startsWith(prefix))) {
+      cb(null, true);
+    } else {
+      cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", "file"));
+    }
+  },
 });
-
-const allowedPrefixes = ["image/", "application/pdf", "text/", "application/zip"];
 
 router.use(requireAuth);
 
@@ -71,16 +78,22 @@ router.post("/upload", upload.single("file"), async (req: AuthedRequest, res, ne
       return res.status(415).json({ message: "Unsupported file type." });
     }
 
-    const file = await prisma.file.create({
-      data: {
-        originalName: req.file.originalname,
-        storedName: req.file.filename,
-        mimeType: req.file.mimetype,
-        size: req.file.size,
-        path: req.file.path,
-        userId: req.userId!,
-      },
-    });
+    let file;
+    try {
+      file = await prisma.file.create({
+        data: {
+          originalName: req.file.originalname,
+          storedName: req.file.filename,
+          mimeType: req.file.mimetype,
+          size: req.file.size,
+          path: req.file.path,
+          userId: req.userId!,
+        },
+      });
+    } catch (error) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      throw error;
+    }
 
     res.status(201).json(file);
   } catch (error) {
